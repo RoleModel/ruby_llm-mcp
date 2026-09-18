@@ -109,7 +109,7 @@ module RubyLLM
           return unless model
 
           @coordinator.sampling_create_message_response(
-            id: @id, message: result[:response], model: model
+            id: @id, message: result[:response], model: SamplingModel.name(model)
           )
         else
           # Invalid hash structure
@@ -129,7 +129,7 @@ module RubyLLM
 
         chat_message = chat(model)
         @coordinator.sampling_create_message_response(
-          id: @id, message: chat_message, model: model
+          id: @id, message: chat_message, model: SamplingModel.name(model)
         )
       end
 
@@ -161,9 +161,7 @@ module RubyLLM
       end
 
       def chat(model)
-        chat = RubyLLM::Chat.new(
-          model: model
-        )
+        chat = SamplingModel.chat(model)
         if system_prompt
           formated_system_message = create_message(system_message)
           chat.add_message(formated_system_message)
@@ -189,10 +187,7 @@ module RubyLLM
       end
 
       def create_message(message)
-        role = message["role"]
-        content = create_content_for_message(message["content"])
-
-        RubyLLM::Message.new({ role: role, content: content })
+        create_content_for_message(message["content"]).to_message(role: message["role"])
       end
 
       def create_content_for_message(content)

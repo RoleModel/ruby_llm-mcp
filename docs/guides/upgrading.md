@@ -19,6 +19,59 @@ This page consolidates upgrade guidance across supported RubyLLM MCP version jum
 
 ---
 
+## Update to 2.0
+
+{: .label .label-red }
+Breaking Change
+
+Version 2.0 requires RubyLLM 2.0, which removed `RubyLLM::Content` and now keeps
+message text and attachments apart.
+
+### Steps
+
+1. Update your Gemfile:
+
+```ruby
+gem 'ruby_llm', '~> 2.0'
+gem 'ruby_llm-mcp', '~> 2.0'
+```
+
+2. Run:
+
+```bash
+bundle update ruby_llm ruby_llm-mcp
+```
+
+3. Handle the new tool result shape. `Tool#execute` returns a `String`, or an
+   `Array` of the text followed by attachments:
+
+```ruby
+result = tool.execute(filename: "report.txt")
+
+case result
+when String then result
+when Array  then text, *attachments = result
+end
+```
+
+4. Rename `Tool#params_schema` to `Tool#parameters_schema`.
+
+5. Pass a `Content` to RubyLLM through `to_message` rather than directly:
+
+```ruby
+chat.add_message(resource.to_content.to_message)
+```
+
+6. `Attachment#content` now returns decoded bytes; the base64 payload the server
+   sent is on `Attachment#encoded`.
+
+Full detail, including the new `preferred_model` chat options, is in
+`docs/guides/upgrading-1.0-to-2.0.md`. Also read the
+[RubyLLM upgrade guide](https://rubyllm.com/upgrading/) for changes in RubyLLM
+itself.
+
+---
+
 ## Update to 1.0
 
 {: .label .label-green }
@@ -143,6 +196,7 @@ end
 
 Legacy per-version guides still exist in the repository and can be referenced if needed:
 
+- `docs/guides/upgrading-1.0-to-2.0.md`
 - `docs/guides/upgrading-0.8-to-1.0.md`
 - `docs/guides/upgrading-0.7-to-0.8.md`
 - `docs/guides/upgrading-0.6-to-0.7.md`

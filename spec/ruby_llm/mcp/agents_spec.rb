@@ -298,7 +298,7 @@ RSpec.describe RubyLLM::MCP::Agents do
       klass = Class.new(RubyLLM::Agent) do
         include RubyLLM::MCP::Agents
 
-        model "gpt-4.1"
+        model "gpt-4.1", provider: :openai, protocol: :chat_completions
         with_toolsets :agent_messages
       end
 
@@ -314,7 +314,7 @@ RSpec.describe RubyLLM::MCP::Agents do
       klass = Class.new(RubyLLM::Agent) do
         include RubyLLM::MCP::Agents
 
-        model "gpt-4.1"
+        model "gpt-4.1", provider: :openai, protocol: :chat_completions
         with_mcps :agent_stdio
       end
 

@@ -226,8 +226,29 @@ PAGINATION_CLIENT_CONFIG = {
 COMPLEX_FUNCTION_MODELS = [
   { provider: :anthropic, model: "claude-sonnet-4" },
   { provider: :gemini, model: "gemini-2.0-flash" },
-  { provider: :openai, model: "gpt-4.1" }
+  # RubyLLM 2.0 moved OpenAI to the Responses API by default; these specs stay
+  # on Chat Completions, which is what their cassettes recorded.
+  { provider: :openai, model: "gpt-4.1", protocol: :chat_completions }
 ].freeze
+
+# Builds the chat these specs talk to. The provider is always explicit, since
+# several of these model names are offered by more than one provider, and the
+# model is taken on trust so the specs keep testing the recorded model rather
+# than whatever the bundled registry currently lists.
+module ChatBuilder
+  def chat_options_for(model_config)
+    {
+      model: model_config[:model],
+      provider: model_config[:provider],
+      protocol: model_config[:protocol],
+      assume_model_exists: true
+    }.compact
+  end
+
+  def build_chat(model_config, **options)
+    RubyLLM.chat(**chat_options_for(model_config), **options)
+  end
+end
 
 MCPTestConfiguration.configure!
 
@@ -241,6 +262,8 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+
+  config.include ChatBuilder
 
   config.before(:suite) do
     TestServerManager.start_server

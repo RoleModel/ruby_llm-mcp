@@ -89,6 +89,26 @@ result = client.execute_tool(
 puts "File contents: #{result}"
 ```
 
+### What a Tool Returns
+
+A tool result is text, and matches what RubyLLM 2.0 expects a tool to return:
+
+- a `String` for text content, including structured content, which comes back as
+  validated JSON
+- an `Array` of the text followed by `RubyLLM::MCP::Attachment` objects when the
+  server sent an image, audio, or binary resource
+- a `Hash` like `{ error: "..." }` when the call failed
+
+```ruby
+result = tool.execute(path: "diagram.png")
+
+case result
+when Hash   then warn result[:error]
+when Array  then text, *attachments = result
+when String then puts result
+end
+```
+
 ### Structured Tool Output
 
 {: .new }
@@ -144,9 +164,10 @@ result = weather_tool.execute(location: "San Francisco")
 if result.is_a?(Hash) && result[:error]
   puts "Tool validation failed: #{result[:error]}"
 else
-  # Structured, validated output
-  puts "Temperature: #{result.temperature}"
-  puts "Humidity: #{result.humidity}"
+  # Structured, validated output, returned as JSON text
+  weather = JSON.parse(result)
+  puts "Temperature: #{weather['temperature']}"
+  puts "Humidity: #{weather['humidity']}"
 end
 ```
 

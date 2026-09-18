@@ -88,12 +88,7 @@ module RubyLLM
         result.raise_error! if result.error?
 
         result.value["messages"].map do |message|
-          content = create_content_for_message(message["content"])
-
-          RubyLLM::Message.new(
-            role: message["role"],
-            content: content
-          )
+          create_content_for_message(message["content"]).to_message(role: message["role"])
         end
       end
 
@@ -110,7 +105,7 @@ module RubyLLM
         when "text"
           MCP::Content.new(text: content["text"])
         when "image", "audio"
-          attachment = MCP::Attachment.new(content["content"], content["mime_type"])
+          attachment = MCP::Attachment.new(content["data"], content["mimeType"])
           MCP::Content.new(text: nil, attachments: [attachment])
         when "resource"
           resource = Resource.new(adapter, content["resource"])

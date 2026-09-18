@@ -33,7 +33,7 @@ module RubyLLM
           # @param model [String] the model to use
           # @return [Object] chat completion response
           def default_chat_completion(model)
-            chat = RubyLLM::Chat.new(model: model)
+            chat = MCP::SamplingModel.chat(model)
 
             if sample.system_prompt
               chat.add_message(system_message)
@@ -50,9 +50,7 @@ module RubyLLM
 
           # Create a RubyLLM message from raw message data
           def create_message(message)
-            role = message["role"]
-            content = create_content_for_message(message["content"])
-            RubyLLM::Message.new({ role: role, content: content })
+            create_content_for_message(message["content"]).to_message(role: message["role"])
           end
 
           # Create content object for message
@@ -72,10 +70,7 @@ module RubyLLM
 
           # Create system message structure
           def system_message
-            RubyLLM::Message.new({
-                                   role: "system",
-                                   content: MCP::Content.new(text: sample.system_prompt)
-                                 })
+            MCP::Content.new(text: sample.system_prompt).to_message(role: "system")
           end
         end
       end

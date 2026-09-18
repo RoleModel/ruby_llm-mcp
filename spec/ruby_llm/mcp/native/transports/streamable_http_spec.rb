@@ -121,7 +121,7 @@ RSpec.describe RubyLLM::MCP::Native::Transports::StreamableHTTP do
       expect(tool).to be_a(RubyLLM::MCP::Tool)
 
       result = tool.execute(a: 5, b: 3)
-      expect(result).to be_a(RubyLLM::MCP::Content)
+      expect(result).to be_a(String)
       expect(result.to_s).to eq("8")
 
       client.stop
@@ -138,7 +138,7 @@ RSpec.describe RubyLLM::MCP::Native::Transports::StreamableHTTP do
       # Execute a tool to verify full round-trip functionality
       add_tool = client.tool("add")
       result = add_tool.execute(a: 10, b: 20)
-      expect(result).to be_a(RubyLLM::MCP::Content)
+      expect(result).to be_a(String)
       expect(result.to_s).to eq("30")
 
       client.stop
@@ -1062,7 +1062,7 @@ RSpec.describe RubyLLM::MCP::Native::Transports::StreamableHTTP do
       # Execute a tool to verify full round-trip functionality
       tool = client.tool("add")
       result = tool.execute(a: 5, b: 3)
-      expect(result).to be_a(RubyLLM::MCP::Content)
+      expect(result).to be_a(String)
       expect(result.to_s).to eq("8")
 
       client.stop

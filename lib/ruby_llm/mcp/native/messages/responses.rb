@@ -45,20 +45,14 @@ module RubyLLM
           end
 
           def sampling_create_message(id:, message:, model:)
-            stop_reason = if message.respond_to?(:stop_reason) && message.stop_reason
-                            snake_to_camel(message.stop_reason)
-                          else
-                            "endTurn"
-                          end
-
             {
               jsonrpc: JSONRPC_VERSION,
               id: id,
               result: {
                 role: message.role,
-                content: format_content(message.content),
+                content: format_content(message),
                 model: model,
-                stopReason: stop_reason
+                stopReason: format_stop_reason(message)
               }
             }
           end
@@ -88,19 +82,30 @@ module RubyLLM
             }
           end
 
-          def format_content(content)
-            if content.is_a?(RubyLLM::Content)
-              if content.text.none? && content.attachments.any?
-                attachment = content.attachments.first
-                { type: attachment.type, data: attachment.content, mimeType: attachment.mime_type }
-              else
-                { type: "text", text: content.text }
-              end
+          # RubyLLM keeps message text and attachments apart, so an image or
+          # audio reply arrives as an empty body with one attachment.
+          def format_content(message)
+            text = message.content.to_s
+            attachment = Array(message.attachments).first if message.respond_to?(:attachments)
+
+            if text.empty? && attachment
+              { type: attachment.type.to_s, data: attachment.encoded, mimeType: attachment.mime_type }
             else
-              { type: "text", text: content }
+              { type: "text", text: text }
             end
           end
           private_class_method :format_content
+
+          # MCP names its stop reasons in camelCase. Handlers may hand back an
+          # object with its own stop_reason; RubyLLM messages carry a
+          # finish_reason symbol instead.
+          def format_stop_reason(message)
+            reason = message.stop_reason if message.respond_to?(:stop_reason)
+            reason ||= message.finish_reason if message.respond_to?(:finish_reason)
+
+            reason ? snake_to_camel(reason.to_s) : "endTurn"
+          end
+          private_class_method :format_stop_reason
 
           def snake_to_camel(str)
             parts = str.split("_")

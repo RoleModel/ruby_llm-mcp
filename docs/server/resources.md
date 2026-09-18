@@ -461,15 +461,13 @@ When tools execute and return resource references, these become automatically av
 file_tool = client.tool("create_file")
 result = file_tool.execute(filename: "report.txt", content: "Analysis results...")
 
-# If the tool returns a resource reference, it becomes available as a resource
-if result.is_a?(RubyLLM::MCP::Content)
-  # Resource content is automatically parsed and made available
-  puts result.to_s
+# Tool results are text, or an array of text and attachments when the tool
+# returns an image, audio, or binary resource
+puts Array(result).first
 
-  # The resource may also be added to the client's resource list
-  updated_resources = client.resources(refresh: true)
-  puts "New resources: #{updated_resources.map(&:name)}"
-end
+# A returned resource reference is also added to the client's resource list
+updated_resources = client.resources(refresh: true)
+puts "New resources: #{updated_resources.map(&:name)}"
 ```
 
 ### Tool-Generated Resources
@@ -485,15 +483,14 @@ result = report_tool.execute(
   timeframe: "last_quarter"
 )
 
-# The tool returns a resource reference that can be used immediately
-if result.is_a?(RubyLLM::MCP::Content)
-  # Use the generated resource in a conversation
-  chat = RubyLLM.chat(model: "gpt-4")
-  chat.with_resource(result)
+# The tool registers the resource it references, so you can use it right away
+report = client.resources(refresh: true).find { |resource| resource.name == "generated_report" }
 
-  response = chat.ask("Summarize this report")
-  puts response
-end
+chat = RubyLLM.chat(model: "gpt-4")
+chat.with_resource(report)
+
+response = chat.ask("Summarize this report")
+puts response.content
 ```
 
 ### Resource Reference Format
@@ -529,18 +526,16 @@ analysis_tool = client.tool("analyze_data")
 analysis_result = analysis_tool.execute(dataset: "user_behavior")
 
 # 2. Use the generated resource in another tool call
-if analysis_result.is_a?(RubyLLM::MCP::Content)
-  chat = RubyLLM.chat(model: "gpt-4")
-  chat.with_resource(analysis_result)
+analysis = client.resources(refresh: true).find { |resource| resource.name == "user_behavior_analysis" }
 
-  # 3. Generate recommendations based on the analysis
-  recommendation_tool = client.tool("generate_recommendations")
-  recommendations = recommendation_tool.execute(
-    analysis_resource: analysis_result.uri
-  )
+chat = RubyLLM.chat(model: "gpt-4")
+chat.with_resource(analysis)
 
-  puts "Recommendations: #{recommendations}"
-end
+# 3. Generate recommendations based on the analysis
+recommendation_tool = client.tool("generate_recommendations")
+recommendations = recommendation_tool.execute(analysis_resource: analysis.uri)
+
+puts "Recommendations: #{recommendations}"
 ```
 
 ### Temporary vs Persistent Resources

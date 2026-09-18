@@ -679,9 +679,7 @@ RSpec.describe RubyLLM::MCP::Native::Messages do
     end
 
     describe ".sampling_create_message" do
-      let(:mock_content) do
-        double("Content", text: "Hello, world!")
-      end
+      let(:mock_content) { "Hello, world!" }
 
       context "when message has no stop_reason" do
         let(:mock_message) do
@@ -689,9 +687,7 @@ RSpec.describe RubyLLM::MCP::Native::Messages do
             "Message",
             role: "assistant",
             content: mock_content
-          ).tap do |msg|
-            allow(msg).to receive(:respond_to?).with(:stop_reason).and_return(false)
-          end
+          )
         end
 
         let(:body) do
@@ -729,9 +725,7 @@ RSpec.describe RubyLLM::MCP::Native::Messages do
             role: "assistant",
             content: mock_content,
             stop_reason: nil
-          ).tap do |msg|
-            allow(msg).to receive(:respond_to?).with(:stop_reason).and_return(true)
-          end
+          )
         end
 
         let(:body) do
@@ -755,9 +749,7 @@ RSpec.describe RubyLLM::MCP::Native::Messages do
               role: "assistant",
               content: mock_content,
               stop_reason: snake_case_value
-            ).tap do |msg|
-              allow(msg).to receive(:respond_to?).with(:stop_reason).and_return(true)
-            end
+            )
           end
 
           let(:body) do
@@ -816,9 +808,7 @@ RSpec.describe RubyLLM::MCP::Native::Messages do
             role: "assistant",
             content: mock_content,
             stop_reason: "custom_stop_reason"
-          ).tap do |msg|
-            allow(msg).to receive(:respond_to?).with(:stop_reason).and_return(true)
-          end
+          )
         end
 
         let(:body) do

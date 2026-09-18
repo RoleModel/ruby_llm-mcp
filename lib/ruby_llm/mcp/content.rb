@@ -2,24 +2,32 @@
 
 module RubyLLM
   module MCP
-    class Content < RubyLLM::Content
-      attr_reader :text, :attachments, :content
+    # Text and attachments returned by an MCP server, held together until they
+    # are handed to RubyLLM, which keeps the two apart.
+    class Content
+      attr_reader :text, :attachments
 
-      def initialize(text: nil, attachments: nil) # rubocop:disable Lint/MissingSuper
+      def initialize(text: nil, attachments: nil)
         @text = text
-        @attachments = []
-
-        # Handle MCP::Attachment objects directly without processing
-        if attachments.is_a?(Array) && attachments.all? { |a| a.is_a?(MCP::Attachment) }
-          @attachments = attachments
-        elsif attachments
-          # Let parent class process other types of attachments
-          process_attachments(attachments)
-        end
+        @attachments = Array(attachments)
       end
 
-      # This is a workaround to allow the content object to be passed as the tool call
-      # to return audio or image attachments.
+      # The value a RubyLLM::Tool#execute returns: a String on its own, or the
+      # text followed by the attachments when there are any.
+      def to_llm_result
+        return text.to_s if attachments.empty?
+
+        [text.to_s, *attachments]
+      end
+
+      def to_message(role: "user")
+        RubyLLM::Message.new(
+          role: role,
+          content: text.to_s,
+          attachments: attachments
+        )
+      end
+
       def to_s
         text.to_s
       end

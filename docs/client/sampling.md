@@ -255,6 +255,26 @@ end
 # All sampling requests will use GPT-4
 ```
 
+### Passing Chat Options
+
+A model name on its own leaves RubyLLM to work out the provider. Give a Hash
+instead to pass any keyword `RubyLLM::Chat.new` accepts, which is how you pin the
+provider, choose a wire protocol, or name a model the registry does not list:
+
+```ruby
+RubyLLM::MCP.configure do |config|
+  config.sampling.enabled = true
+
+  config.sampling.preferred_model = {
+    model: "gpt-4.1",
+    provider: :openai,
+    protocol: :chat_completions
+  }
+end
+```
+
+The server is still told the plain model name.
+
 ### Dynamic Model Selection
 
 ```ruby
@@ -271,7 +291,7 @@ RubyLLM::MCP.configure do |config|
     when "fast"
       "gpt-3.5-turbo"
     when "smart"
-      "gpt-4"
+      { model: "gpt-4", provider: :openai }
     when "coding"
       "gpt-4"
     else

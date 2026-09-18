@@ -228,7 +228,7 @@ RSpec.describe RubyLLM::MCP::Resource do
           format: "text"
         )
 
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("Test Report")
         expect(result.to_s).to include("created successfully")
 
@@ -253,7 +253,7 @@ RSpec.describe RubyLLM::MCP::Resource do
           format: "json"
         )
 
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("JSON Report")
       end
     end
