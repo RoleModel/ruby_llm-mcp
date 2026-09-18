@@ -60,12 +60,7 @@ module RubyLLM
       end
 
       def include(chat, **args)
-        message = RubyLLM::Message.new(
-          role: "user",
-          content: to_content(**args)
-        )
-
-        chat.add_message(message)
+        chat.add_message(to_content(**args).to_message)
       end
 
       def to_content

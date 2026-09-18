@@ -189,7 +189,7 @@ RSpec.describe RubyLLM::MCP::Sample do
 
         config.sampling.preferred_model do |incoming_model_preferences|
           model_preferences = incoming_model_preferences
-          incoming_model_preferences&.hints&.first
+          chat_options_for(provider: :gemini, model: incoming_model_preferences&.hints&.first)
         end
       end
 
@@ -246,7 +246,7 @@ RSpec.describe RubyLLM::MCP::Sample do
         it "executes a chat message and provides information to the server without a guard" do
           RubyLLM::MCP.configure do |config|
             config.sampling.enabled = true
-            config.sampling.preferred_model = model[:model]
+            config.sampling.preferred_model = chat_options_for(model)
           end
           client.start
 
@@ -259,7 +259,7 @@ RSpec.describe RubyLLM::MCP::Sample do
         it "provides information about the sample with a guard" do
           RubyLLM::MCP.configure do |config|
             config.sampling.enabled = true
-            config.sampling.preferred_model = model[:model]
+            config.sampling.preferred_model = chat_options_for(model)
 
             config.sampling.guard do
               true

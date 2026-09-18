@@ -88,28 +88,27 @@ RSpec.describe RubyLLM::MCP::Tool do
         image_tool = client.tool("get_dog_image")
         result = image_tool.execute
 
-        expect(result).to be_a(RubyLLM::MCP::Content)
-        expect(result.attachments.first).to be_a(RubyLLM::MCP::Attachment)
-        expect(result.attachments.first.mime_type).to eq("image/png")
-        expect(result.attachments.first.content).not_to be_nil
+        expect(result).to be_an(Array)
+        expect(result.last).to be_a(RubyLLM::MCP::Attachment)
+        expect(result.last.mime_type).to eq("image/png")
+        expect(result.last.content).not_to be_nil
       end
 
       it "calls a tool and get back an audio" do
         audio_tool = client.tool("get_jackhammer_audio")
         result = audio_tool.execute
 
-        expect(result).to be_a(RubyLLM::MCP::Content)
-        expect(result.attachments).not_to be_nil
-        expect(result.attachments.first).to be_a(RubyLLM::MCP::Attachment)
-        expect(result.attachments.first.mime_type).to eq("audio/wav")
-        expect(result.attachments.first.content).not_to be_nil
+        expect(result).to be_an(Array)
+        expect(result.last).to be_a(RubyLLM::MCP::Attachment)
+        expect(result.last.mime_type).to eq("audio/wav")
+        expect(result.last.content).not_to be_nil
       end
 
       it "calls a tool and get back a resource" do
         resource_tool = client.tool("get_file_resource")
         result = resource_tool.execute(filename: "test.txt")
 
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         value = <<~TODO
           get_file_resource: Returns a file resource reference
 
@@ -129,7 +128,7 @@ RSpec.describe RubyLLM::MCP::Tool do
 
         # Test when tool doesn't return an error
         result = error_tool.execute(shouldError: false)
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to eq("No error")
       end
 
@@ -137,13 +136,13 @@ RSpec.describe RubyLLM::MCP::Tool do
         tool = client.tool("fetch_site")
         result = tool.execute(website: "https://www.example.com/")
 
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("Example")
 
         result = tool.execute(website: { url: "https://www.example.com/",
                                          headers: [{ name: "User-Agent", value: "test" }] })
 
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("Example Domain")
       end
     end
@@ -251,7 +250,7 @@ RSpec.describe RubyLLM::MCP::Tool do
         expect(tool).to be_a(RubyLLM::MCP::Tool)
 
         result = tool.execute(data: "Hello world this is a test", format: "summary")
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
 
         # Check if structured content is available and validated
         if result.respond_to?(:structured_content)
@@ -272,7 +271,7 @@ RSpec.describe RubyLLM::MCP::Tool do
         result = tool.execute(trigger_error: true)
 
         # The tool should still return content, but structured validation may fail
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("Invalid structured data")
       end
 
@@ -280,7 +279,7 @@ RSpec.describe RubyLLM::MCP::Tool do
         tool = client.tool("invalid_structured_output")
 
         result = tool.execute(trigger_error: false)
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("Valid output")
       end
     end
@@ -300,7 +299,7 @@ RSpec.describe RubyLLM::MCP::Tool do
         tool = client.tool("complex_calculation")
 
         result = tool.execute(expression: "2 + 2", precision: 1)
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("Result: 4.0")
       end
 
@@ -332,7 +331,7 @@ RSpec.describe RubyLLM::MCP::Tool do
         tool = client.tool("complex_calculation")
 
         result = tool.execute(expression: "10 * 5", precision: 0)
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("50")
       end
 
@@ -341,7 +340,7 @@ RSpec.describe RubyLLM::MCP::Tool do
         expect(tool).to be_a(RubyLLM::MCP::Tool)
 
         result = tool.execute(duration: 500, steps: 3)
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
 
         # Check for metadata in response
         if result.respond_to?(:metadata) || result.respond_to?(:meta)
@@ -354,13 +353,13 @@ RSpec.describe RubyLLM::MCP::Tool do
         tool = client.tool("long_running_task")
 
         result = tool.execute(duration: 1000, steps: 5)
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("long-running task")
       end
     end
   end
 
-  describe "params_schema" do
+  describe "parameters_schema" do
     let(:mock_coordinator) { double("Coordinator", name: "test") }
 
     it "returns the input schema as-is" do
@@ -385,11 +384,11 @@ RSpec.describe RubyLLM::MCP::Tool do
 
       tool = RubyLLM::MCP::Tool.new(mock_coordinator, tool_response)
 
-      expect(tool.params_schema).to eq(tool_response["inputSchema"])
-      expect(tool.params_schema["type"]).to eq("object")
-      expect(tool.params_schema["properties"]).to have_key("name")
-      expect(tool.params_schema["properties"]).to have_key("age")
-      expect(tool.params_schema["required"]).to eq(["name"])
+      expect(tool.parameters_schema).to eq(tool_response["inputSchema"])
+      expect(tool.parameters_schema["type"]).to eq("object")
+      expect(tool.parameters_schema["properties"]).to have_key("name")
+      expect(tool.parameters_schema["properties"]).to have_key("age")
+      expect(tool.parameters_schema["required"]).to eq(["name"])
     end
 
     it "handles complex anyOf schemas" do
@@ -418,9 +417,9 @@ RSpec.describe RubyLLM::MCP::Tool do
 
       tool = RubyLLM::MCP::Tool.new(mock_coordinator, tool_response)
 
-      expect(tool.params_schema["properties"]["value"]).to have_key("anyOf")
-      expect(tool.params_schema["properties"]["value"]["anyOf"]).to be_an(Array)
-      expect(tool.params_schema["properties"]["value"]["anyOf"].length).to eq(2)
+      expect(tool.parameters_schema["properties"]["value"]).to have_key("anyOf")
+      expect(tool.parameters_schema["properties"]["value"]["anyOf"]).to be_an(Array)
+      expect(tool.parameters_schema["properties"]["value"]["anyOf"].length).to eq(2)
     end
 
     it "handles schemas with title fields" do
@@ -446,8 +445,8 @@ RSpec.describe RubyLLM::MCP::Tool do
 
       tool = RubyLLM::MCP::Tool.new(mock_coordinator, tool_response)
 
-      expect(tool.params_schema["properties"]["user_email"]["title"]).to eq("User's Email Address")
-      expect(tool.params_schema["properties"]["count"]["title"]).to eq("Item Count")
+      expect(tool.parameters_schema["properties"]["user_email"]["title"]).to eq("User's Email Address")
+      expect(tool.parameters_schema["properties"]["count"]["title"]).to eq("Item Count")
     end
 
     it "handles schemas with nested objects" do
@@ -471,10 +470,10 @@ RSpec.describe RubyLLM::MCP::Tool do
 
       tool = RubyLLM::MCP::Tool.new(mock_coordinator, tool_response)
 
-      expect(tool.params_schema["properties"]["user"]["type"]).to eq("object")
-      expect(tool.params_schema["properties"]["user"]["properties"]).to have_key("name")
-      expect(tool.params_schema["properties"]["user"]["properties"]).to have_key("email")
-      expect(tool.params_schema["properties"]["user"]["required"]).to eq(["name"])
+      expect(tool.parameters_schema["properties"]["user"]["type"]).to eq("object")
+      expect(tool.parameters_schema["properties"]["user"]["properties"]).to have_key("name")
+      expect(tool.parameters_schema["properties"]["user"]["properties"]).to have_key("email")
+      expect(tool.parameters_schema["properties"]["user"]["required"]).to eq(["name"])
     end
 
     it "returns nil when no input schema is provided" do
@@ -485,7 +484,7 @@ RSpec.describe RubyLLM::MCP::Tool do
 
       tool = RubyLLM::MCP::Tool.new(mock_coordinator, tool_response)
 
-      expect(tool.params_schema).to be_nil
+      expect(tool.parameters_schema).to be_nil
     end
   end
 
@@ -526,7 +525,7 @@ RSpec.describe RubyLLM::MCP::Tool do
         tool = RubyLLM::MCP::Tool.new(mock_adapter, tool_response)
         result = tool.execute
 
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to eq({ "count" => 42, "message" => "hello" }.to_json)
       end
     end
@@ -630,7 +629,7 @@ RSpec.describe RubyLLM::MCP::Tool do
         tool = RubyLLM::MCP::Tool.new(mock_adapter, tool_response)
         result = tool.execute
 
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to eq({ "value" => "test" }.to_json)
       end
     end
@@ -658,7 +657,7 @@ RSpec.describe RubyLLM::MCP::Tool do
         result = tool.execute
 
         # Should return normal content, not validate structured content
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to eq("Normal output")
       end
     end
@@ -690,7 +689,7 @@ RSpec.describe RubyLLM::MCP::Tool do
         tool = RubyLLM::MCP::Tool.new(mock_adapter, tool_response)
         result = tool.execute
 
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to eq("Just text, no structured content")
       end
     end
@@ -711,9 +710,9 @@ RSpec.describe RubyLLM::MCP::Tool do
 
         tool = RubyLLM::MCP::Tool.new(mock_coordinator, tool_response)
 
-        expect(tool.params_schema["type"]).to eq("object")
-        expect(tool.params_schema).to have_key("properties")
-        expect(tool.params_schema["properties"]).to eq({})
+        expect(tool.parameters_schema["type"]).to eq("object")
+        expect(tool.parameters_schema).to have_key("properties")
+        expect(tool.parameters_schema["properties"]).to eq({})
       end
 
       it "normalizes nested object schemas missing properties" do
@@ -732,9 +731,9 @@ RSpec.describe RubyLLM::MCP::Tool do
 
         tool = RubyLLM::MCP::Tool.new(mock_coordinator, tool_response)
 
-        expect(tool.params_schema["properties"]["user"]["type"]).to eq("object")
-        expect(tool.params_schema["properties"]["user"]).to have_key("properties")
-        expect(tool.params_schema["properties"]["user"]["properties"]).to eq({})
+        expect(tool.parameters_schema["properties"]["user"]["type"]).to eq("object")
+        expect(tool.parameters_schema["properties"]["user"]).to have_key("properties")
+        expect(tool.parameters_schema["properties"]["user"]["properties"]).to eq({})
       end
 
       it "normalizes object schemas in arrays" do
@@ -756,7 +755,7 @@ RSpec.describe RubyLLM::MCP::Tool do
 
         tool = RubyLLM::MCP::Tool.new(mock_coordinator, tool_response)
 
-        item_schema = tool.params_schema["properties"]["items"]["items"]
+        item_schema = tool.parameters_schema["properties"]["items"]["items"]
         expect(item_schema["type"]).to eq("object")
         expect(item_schema).to have_key("properties")
         expect(item_schema["properties"]).to eq({})
@@ -779,9 +778,9 @@ RSpec.describe RubyLLM::MCP::Tool do
         tool = RubyLLM::MCP::Tool.new(mock_coordinator, tool_response)
 
         # Schema should be returned as-is since it's valid
-        expect(tool.params_schema).to eq(tool_response["inputSchema"])
-        expect(tool.params_schema["type"]).to eq("object")
-        expect(tool.params_schema["properties"]["name"]["type"]).to eq("string")
+        expect(tool.parameters_schema).to eq(tool_response["inputSchema"])
+        expect(tool.parameters_schema["type"]).to eq("object")
+        expect(tool.parameters_schema["properties"]["name"]["type"]).to eq("string")
       end
 
       it "normalizes schemas that fail validation" do
@@ -797,9 +796,9 @@ RSpec.describe RubyLLM::MCP::Tool do
         tool = RubyLLM::MCP::Tool.new(mock_coordinator, tool_response)
 
         # Should be normalized to include properties
-        expect(tool.params_schema["type"]).to eq("object")
-        expect(tool.params_schema).to have_key("properties")
-        expect(tool.params_schema["properties"]).to eq({})
+        expect(tool.parameters_schema["type"]).to eq("object")
+        expect(tool.parameters_schema).to have_key("properties")
+        expect(tool.parameters_schema["properties"]).to eq({})
       end
     end
 
@@ -816,11 +815,11 @@ RSpec.describe RubyLLM::MCP::Tool do
         tool = RubyLLM::MCP::Tool.new(mock_coordinator, tool_response)
 
         # Store the normalized schema
-        first_call = tool.params_schema
+        first_call = tool.parameters_schema
 
-        # Call params_schema multiple times
-        second_call = tool.params_schema
-        third_call = tool.params_schema
+        # Call parameters_schema multiple times
+        second_call = tool.parameters_schema
+        third_call = tool.parameters_schema
 
         # Should return the same normalized schema each time
         expect(first_call).to eq(second_call)
@@ -842,7 +841,7 @@ RSpec.describe RubyLLM::MCP::Tool do
         tool = RubyLLM::MCP::Tool.new(mock_coordinator, tool_response)
 
         # Normalized schema should have properties
-        expect(tool.params_schema).to have_key("properties")
+        expect(tool.parameters_schema).to have_key("properties")
 
         # Original schema should remain unchanged (no properties)
         expect(original_schema).not_to have_key("properties")
@@ -859,7 +858,7 @@ RSpec.describe RubyLLM::MCP::Tool do
 
         tool = RubyLLM::MCP::Tool.new(mock_coordinator, tool_response)
 
-        expect(tool.params_schema).to be_nil
+        expect(tool.parameters_schema).to be_nil
       end
 
       it "handles empty hash schema" do
@@ -871,7 +870,7 @@ RSpec.describe RubyLLM::MCP::Tool do
 
         tool = RubyLLM::MCP::Tool.new(mock_coordinator, tool_response)
 
-        expect(tool.params_schema).to eq({})
+        expect(tool.parameters_schema).to eq({})
       end
 
       it "handles schema with type array" do
@@ -886,8 +885,8 @@ RSpec.describe RubyLLM::MCP::Tool do
 
         tool = RubyLLM::MCP::Tool.new(mock_coordinator, tool_response)
 
-        expect(tool.params_schema["type"]).to eq("array")
-        expect(tool.params_schema["items"]["type"]).to eq("string")
+        expect(tool.parameters_schema["type"]).to eq("array")
+        expect(tool.parameters_schema["items"]["type"]).to eq("string")
       end
 
       it "handles complex schemas with anyOf and nested objects" do
@@ -914,7 +913,7 @@ RSpec.describe RubyLLM::MCP::Tool do
 
         tool = RubyLLM::MCP::Tool.new(mock_coordinator, tool_response)
 
-        any_of = tool.params_schema["properties"]["value"]["anyOf"]
+        any_of = tool.parameters_schema["properties"]["value"]["anyOf"]
         expect(any_of.length).to eq(2)
         # First anyOf option should remain unchanged (has properties)
         expect(any_of[0]["properties"]).to have_key("key")
@@ -930,7 +929,7 @@ RSpec.describe RubyLLM::MCP::Tool do
         it "normalizes malformed_tool schema correctly" do
           tool = client.tool("malformed_tool")
 
-          schema = tool.params_schema
+          schema = tool.parameters_schema
           expect(schema).not_to be_nil
           expect(schema["type"]).to eq("object")
 
@@ -942,7 +941,7 @@ RSpec.describe RubyLLM::MCP::Tool do
         it "preserves valid schemas without normalization" do
           tool = client.tool("add")
 
-          schema = tool.params_schema
+          schema = tool.parameters_schema
           expect(schema).not_to be_nil
           expect(schema["type"]).to eq("object")
           expect(schema["properties"]).to have_key("a")
@@ -1157,7 +1156,7 @@ RSpec.describe RubyLLM::MCP::Tool do
       result = tool.execute
 
       expect(mock_adapter).to have_received(:register_resource)
-      expect(result).to be_a(RubyLLM::MCP::Content)
+      expect(result).to be_a(String)
     end
 
     it "extracts resource metadata from resource_link content" do
@@ -1204,11 +1203,8 @@ RSpec.describe RubyLLM::MCP::Tool do
 
         # Tool should return text content (not the structured data)
         # Structured data is for validation only
-        if result.is_a?(String)
-          expect(result).to include("Analysis completed")
-        elsif result.is_a?(RubyLLM::MCP::Content)
-          expect(result.to_s).to include("Analysis completed")
-        end
+        expect(result).to be_a(String)
+        expect(result).to include("Analysis completed")
       end
 
       it "handles tools returning resource content type" do
@@ -1217,7 +1213,7 @@ RSpec.describe RubyLLM::MCP::Tool do
 
         result = tool.execute(title: "Test Report", content: "Report content here", format: "text")
 
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("Test Report")
       end
 

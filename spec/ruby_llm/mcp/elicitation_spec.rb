@@ -94,7 +94,7 @@ RSpec.describe RubyLLM::MCP::Elicitation do
         expect(tool).to be_a(RubyLLM::MCP::Tool)
 
         result = tool.execute(scenario: "preference_collection")
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("Collected user preferences")
       end
 
@@ -117,7 +117,7 @@ RSpec.describe RubyLLM::MCP::Elicitation do
         expect(tool).to be_a(RubyLLM::MCP::Tool)
 
         result = tool.execute(scenario: "app_preferences")
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("Collected user preferences")
         # Verify the elicitation response is included in the result
         expect(result.to_s).to include("dark")
@@ -140,7 +140,7 @@ RSpec.describe RubyLLM::MCP::Elicitation do
         expect(tool).to be_a(RubyLLM::MCP::Tool)
 
         result = tool.execute(message: "Please confirm your choice")
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("Simple elicitation completed")
         # Verify the confirmation response is included
         expect(result.to_s).to include("confirmed")
@@ -159,7 +159,7 @@ RSpec.describe RubyLLM::MCP::Elicitation do
         tool = client.tool("simple_elicitation")
         result = tool.execute(message: "Please confirm your choice")
 
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("handled by class")
       end
 
@@ -191,14 +191,14 @@ RSpec.describe RubyLLM::MCP::Elicitation do
 
         # Test user profile collection
         result = tool.execute(data_type: "user_profile")
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("Complex elicitation completed")
         expect(result.to_s).to include("John Doe")
         expect(result.to_s).to include("john@example.com")
 
         # Test settings collection
         result = tool.execute(data_type: "settings")
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("Complex elicitation completed")
         expect(result.to_s).to include("auto_save")
         expect(result.to_s).to include("daily")
@@ -220,12 +220,12 @@ RSpec.describe RubyLLM::MCP::Elicitation do
 
         # Test rejection of sensitive request
         result = tool.execute(request_type: "sensitive")
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("decline")
 
         # Test acceptance of optional request
         result = tool.execute(request_type: "optional")
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("elicitation completed")
         expect(result.to_s).to include("safe_data")
       end
@@ -246,7 +246,7 @@ RSpec.describe RubyLLM::MCP::Elicitation do
         expect(tool).to be_a(RubyLLM::MCP::Tool)
 
         result = tool.execute(message: "Please provide a quick response")
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("Simple elicitation completed")
         expect(result.to_s).to include("quick_answer")
       end
@@ -264,7 +264,7 @@ RSpec.describe RubyLLM::MCP::Elicitation do
 
         # Tool should handle invalid response gracefully
         result = tool.execute(data_type: "user_profile")
-        expect(result).to be_a(RubyLLM::MCP::Content)
+        expect(result).to be_a(String)
         expect(result.to_s).to include("Complex elicitation completed")
         # Invalid response should cause cancellation
         expect(result.to_s).to include("\"action\":\"cancel\"")

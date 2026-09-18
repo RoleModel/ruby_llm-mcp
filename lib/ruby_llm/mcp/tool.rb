@@ -50,7 +50,7 @@ module RubyLLM
         "#{@adapter.client.name}: #{@name}"
       end
 
-      def params_schema
+      def parameters_schema
         @normalized_input_schema
       end
 
@@ -84,21 +84,23 @@ module RubyLLM
 
           # Return structured content as JSON - this is the authoritative, schema-validated data
           # The LLM needs the structured data to give accurate responses
-          return create_content_for_message({ "type" => "text", "text" => structured_content.to_json })
+          return structured_content.to_json
         end
 
-        if text_values.empty?
-          create_content_for_message(content.first)
-        else
-          create_content_for_message({ "type" => "text", "text" => text_values })
-        end
+        result = if text_values.empty?
+                   create_content_for_message(content.first)
+                 else
+                   create_content_for_message({ "type" => "text", "text" => text_values })
+                 end
+
+        result&.to_llm_result
       end
 
       def to_h
         {
           name: @name,
           description: @description,
-          params_schema: @normalized_input_schema,
+          parameters_schema: @normalized_input_schema,
           annotations: @annotations&.to_h
         }
       end
